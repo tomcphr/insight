@@ -15,15 +15,19 @@ window.onload = function () {
         },
 
         create: function () {
+            game.stage.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+
             game.stage.backgroundColor = "#87CEFA";
 
-            game.world.setBounds(0, 0, 2000, 1000);
+            game.world.setBounds(0, 0, 4000, 4000);
 
             // Start the Arcade physics system (for movements and collisions)
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
             // Add the physics engine to all game objects
             game.world.enableBody = true;
+
+            this.scaleRatio = window.devicePixelRatio / 3;
 
             // Variable to store the arrow key pressed
             this.cursor = game.input.keyboard.createCursorKeys();
@@ -38,6 +42,8 @@ window.onload = function () {
             game.camera.follow(this.player);
 
             this.blocks = this.add.group();
+
+            this.blockSize = 32;
 
             this.inventory = {};
 
@@ -57,10 +63,10 @@ window.onload = function () {
         }
     };
 
-    var width = 480;
-    var height = 320;
+    var width = 800;
+    var height = 480;
 
-    var game = new Phaser.Game(width, height, Phaser.CANVAS);
+    var game = new Phaser.Game(width, height, Phaser.CANVAS, "playArea");
 
     game.state.add("play", playState);
 
@@ -73,7 +79,7 @@ window.onload = function () {
  */
 function handleMovement(phaser, game)
 {
-    var movementSpeed = 250;
+    var movementSpeed = 400;
 
     phaser.player.body.velocity.x = 0;
 
@@ -83,7 +89,7 @@ function handleMovement(phaser, game)
         phaser.player.body.velocity.x = movementSpeed;
     }
 
-    var jumpingSpeed = 280;
+    var jumpingSpeed = 250 + (phaser.blockSize * 2);
 
     // Make the player jump if he is touching the ground
     if (phaser.cursor.up.isDown && phaser.player.body.touching.down) {
@@ -107,11 +113,9 @@ function handleLevel(phaser, game)
     var worldWidth = game.world.bounds.width;
 
     var localChunkX = phaser.player.x - (worldWidth / 2);
-    var localChunkY = game.world.centerY + 32;
+    var localChunkY = game.world.centerY + (phaser.blockSize * 2);
 
-    var blockSize = 16;
-
-    var totalBlocks = Math.ceil((worldWidth / blockSize) * 1) / 1;
+    var totalBlocks = Math.ceil((worldWidth / phaser.blockSize) * 1) / 1;
 
     var depth = 0;
     for (var level in levels) {
@@ -119,8 +123,8 @@ function handleLevel(phaser, game)
 
         for (var row = 0; row < rows; row++) {
             for (var block = 0; block < totalBlocks; block++) {
-                var blockX = localChunkX + (block * blockSize);
-                var blockY = localChunkY + (depth * blockSize);
+                var blockX = localChunkX + (block * phaser.blockSize);
+                var blockY = localChunkY + (depth * phaser.blockSize);
 
                 // Ensure that no block already exists at the X and Y coords
                 if (!getBlockInformation(phaser, blockX, blockY)) {
@@ -132,11 +136,11 @@ function handleLevel(phaser, game)
                         sprite.events.onInputDown.add(function (sprite, pointer) {
                             var blockX = sprite.x;
                             var playerX = phaser.player.x;
-                            var blocksAwayX = ((blockX - playerX) / 16) | 0;
+                            var blocksAwayX = ((blockX - playerX) / phaser.blockSize) | 0;
 
                             var blockY = sprite.y;
                             var playerY = phaser.player.y;
-                            var blocksAwayY = ((blockY - playerY) / 16) | 0;
+                            var blocksAwayY = ((blockY - playerY) / phaser.blockSize) | 0;
 
                             if (blocksAwayX > 1 || blocksAwayX < -1) {
                                 return;
@@ -162,7 +166,7 @@ function handleLevel(phaser, game)
 
                                 if (positions.length > 0) {
                                     var maxPos = Math.max.apply(Math, positions);
-                                    startX = maxPos + 45;
+                                    startX = maxPos + (phaser.blockSize) + 20;
                                 }
 
                                 phaser.itemSlots[item] = {
@@ -178,10 +182,8 @@ function handleLevel(phaser, game)
                                 };
 
                                 phaser.itemSlots[item]["frame"].fixedToCamera = true;
-                                phaser.itemSlots[item]["frame"].scale.setTo(2, 2);
 
                                 phaser.itemSlots[item]["item"].fixedToCamera = true;
-                                phaser.itemSlots[item]["item"].scale.setTo(2, 2);
 
                                 phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 26, 30, 20);
                                 phaser.itemSlots[item]["text"].fixedToCamera = true;
@@ -228,40 +230,4 @@ function getBlockInformation(phaser, x, y)
     }
 
     return data;
-}
-
-
-/**
- *
- */
-function updateInventory(phaser, game)
-{
-    var frameX = 5;
-    $.each(phaser.inventory, function (key, value) {
-        if (!(key in phaser.itemSlots)) {
-            phaser.itemSlots[key] = {
-                "frame"     :   game.add.sprite(frameX, 5, "item_slot"),
-                "item"      :   game.add.sprite(frameX + 4, 9, key),
-                "text"      :   game.add.text(0, 0, value, {
-                    font: "12px Courier",
-                    fill: "#fff",
-                    boundsAlignH: "right",
-                    boundsAlignV: "middle"
-                }),
-            };
-
-            phaser.itemSlots[key]["frame"].fixedToCamera = true;
-            phaser.itemSlots[key]["frame"].scale.setTo(2, 2);
-
-            phaser.itemSlots[key]["item"].fixedToCamera = true;
-            phaser.itemSlots[key]["item"].scale.setTo(2, 2);
-
-            phaser.itemSlots[key]["text"].setTextBounds(frameX + 4, 26, 30, 20);
-            phaser.itemSlots[key]["text"].fixedToCamera = true;
-        } else {
-            phaser.itemSlots[key]["text"].setText(value);
-        }
-
-        frameX += 45;
-    });
 }
