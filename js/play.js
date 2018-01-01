@@ -49,13 +49,16 @@ window.onload = function () {
 
             this.itemSlots = {};
 
-            handleLevel(this, game);
+            renderViewPort(this, game);
         },
 
         update: function () {
             handleCollision(this, game);
 
             handleMovement(this, game);
+            if (this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd) {
+                renderViewPort(this, game);
+            }
         },
 
         render: function () {
@@ -66,11 +69,179 @@ window.onload = function () {
     var width = 800;
     var height = 480;
 
-    var game = new Phaser.Game(width, height, Phaser.CANVAS, "playArea");
+    var game = new Phaser.Game(width, height, Phaser.AUTO, "playArea");
 
     game.state.add("play", playState);
 
     game.state.start("play");
+}
+
+
+/**
+ *
+ */
+function renderViewPort(phaser, game)
+{
+    if (!phaser.level) {
+        phaser.level = getLevelInformation(phaser, game);
+    }
+
+    var startCameraX = phaser.player.x - (game.camera.width);
+    var endCameraX = phaser.player.x + (game.camera.width);
+
+    var startCameraY = phaser.player.y - (game.camera.height);
+    var endCameraY = phaser.player.y + (game.camera.height);
+
+    phaser.renderBoundaries = {
+        "xStart"    :   startCameraX + (game.camera.width / 2),
+        "xEnd"      :   endCameraX - (game.camera.width / 2),
+        "yStart"    :   startCameraY + (game.camera.height / 2),
+        "yEnd"      :   endCameraY - (game.camera.height / 2),
+    };
+
+    $.each(phaser.level, function (key, object) {
+        if (object.x < startCameraX || object.x > endCameraX) {
+            if (object.sprite) {
+                object.sprite.kill();
+            }
+            return;
+        }
+
+        if (object.y < startCameraY || object.y > endCameraY) {
+            if (object.sprite) {
+                object.sprite.kill();
+            }
+            return;
+        }
+
+        if (object.sprite) {
+            object.sprite.revive();
+            return;
+        }
+
+        var sprite = phaser.add.sprite(object.x, object.y, object.level);
+
+        sprite.body.immovable = true;
+
+        // Allow blocks to be destroyed if it isn't bedrock
+        if (object.level != "bedrock") {
+            sprite.inputEnabled = true;
+            sprite.events.onInputDown.add(function (sprite, pointer) {
+                var blockX = sprite.x;
+                var playerX = phaser.player.x;
+                var blocksAwayX = ((blockX - playerX) / phaser.blockSize) | 0;
+
+                var blockY = sprite.y;
+                var playerY = phaser.player.y;
+                var blocksAwayY = ((blockY - playerY) / phaser.blockSize) | 0;
+
+                if (blocksAwayX > 1 || blocksAwayX < -1) {
+                    return;
+                }
+
+                if (blocksAwayY > 1 || blocksAwayY < -1) {
+                    return;
+                }
+
+                phaser.blocks.remove(sprite);
+
+                var item = sprite.key;
+                if (!(item in phaser.inventory)) {
+                    phaser.inventory[item] = 0;
+
+                    var startX = 5;
+
+                    var positions = [];
+
+                    $.each(phaser.itemSlots, function (key, object) {
+                        positions.push(object.startX);
+                    });
+
+                    if (positions.length > 0) {
+                        var maxPos = Math.max.apply(Math, positions);
+                        startX = maxPos + (phaser.blockSize) + 20;
+                    }
+
+                    phaser.itemSlots[item] = {
+                        "frame"     :   game.add.image(startX, 5, "item_slot"),
+                        "item"      :   game.add.image(startX + 4, 9, item),
+                        "text"      :   game.add.text(0, 0, phaser.inventory[item], {
+                            font: "12px Courier",
+                            fill: "#fff",
+                            boundsAlignH: "right",
+                            boundsAlignV: "middle"
+                        }),
+                        "startX"    :   startX,
+                    };
+
+                    phaser.itemSlots[item]["frame"].fixedToCamera = true;
+
+                    phaser.itemSlots[item]["item"].fixedToCamera = true;
+
+                    phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 26, 30, 20);
+                    phaser.itemSlots[item]["text"].fixedToCamera = true;
+                }
+
+                phaser.inventory[item]++;
+
+                phaser.itemSlots[item]["text"].setText(phaser.inventory[item]);
+
+                sprite.destroy();
+            }, this);
+        }
+
+        phaser.blocks.add(sprite);
+
+        phaser.level[key]["sprite"] = sprite;
+    });
+}
+
+
+/**
+ *
+ */
+function getLevelInformation(phaser, game)
+{
+    var data = [];
+
+    var levels = {
+        "grass"     :   1,
+        "dirt"      :   10,
+        "stone"     :   15,
+        "bedrock"   :   10,
+    };
+
+    var worldWidth = game.world.bounds.width;
+
+    var localChunkX = phaser.player.x - (worldWidth / 2);
+    var localChunkY = game.world.centerY + (phaser.blockSize * 2);
+
+    var totalBlocks = Math.ceil((worldWidth / phaser.blockSize) * 1) / 1;
+
+    var depth = 0;
+    for (var level in levels) {
+        var rows = levels[level];
+
+        for (var row = 0; row < rows; row++) {
+            for (var block = 0; block < totalBlocks; block++) {
+                var blockX = localChunkX + (block * phaser.blockSize);
+                var blockY = localChunkY + (depth * phaser.blockSize);
+
+                // Ensure that no block already exists at the X and Y coords
+                if (!blockExistsAt(phaser, blockX, blockY)) {
+                    data.push({
+                        "level" :   level,
+                        "x"     :   blockX,
+                        "y"     :   blockY
+                    });
+                }
+            }
+
+            depth++;
+        }
+    }
+
+    return data;
 }
 
 
@@ -101,114 +272,6 @@ function handleMovement(phaser, game)
 /**
  *
  */
-function handleLevel(phaser, game)
-{
-    var levels = {
-        "grass"     :   1,
-        "dirt"      :   10,
-        "stone"     :   15,
-        "bedrock"   :   10,
-    };
-
-    var worldWidth = game.world.bounds.width;
-
-    var localChunkX = phaser.player.x - (worldWidth / 2);
-    var localChunkY = game.world.centerY + (phaser.blockSize * 2);
-
-    var totalBlocks = Math.ceil((worldWidth / phaser.blockSize) * 1) / 1;
-
-    var depth = 0;
-    for (var level in levels) {
-        var rows = levels[level];
-
-        for (var row = 0; row < rows; row++) {
-            for (var block = 0; block < totalBlocks; block++) {
-                var blockX = localChunkX + (block * phaser.blockSize);
-                var blockY = localChunkY + (depth * phaser.blockSize);
-
-                // Ensure that no block already exists at the X and Y coords
-                if (!getBlockInformation(phaser, blockX, blockY)) {
-                    var sprite = phaser.add.sprite(blockX, blockY, level);
-                    sprite.body.immovable = true;
-                    // Allow blocks to be destroyed if it isn't bedrock
-                    if (level != "bedrock") {
-                        sprite.inputEnabled = true;
-                        sprite.events.onInputDown.add(function (sprite, pointer) {
-                            var blockX = sprite.x;
-                            var playerX = phaser.player.x;
-                            var blocksAwayX = ((blockX - playerX) / phaser.blockSize) | 0;
-
-                            var blockY = sprite.y;
-                            var playerY = phaser.player.y;
-                            var blocksAwayY = ((blockY - playerY) / phaser.blockSize) | 0;
-
-                            if (blocksAwayX > 1 || blocksAwayX < -1) {
-                                return;
-                            }
-
-                            if (blocksAwayY > 1 || blocksAwayY < -1) {
-                                return;
-                            }
-
-                            phaser.blocks.remove(sprite);
-
-                            var item = sprite.key;
-                            if (!(item in phaser.inventory)) {
-                                phaser.inventory[item] = 0;
-
-                                var startX = 5;
-
-                                var positions = [];
-
-                                $.each(phaser.itemSlots, function (key, object) {
-                                    positions.push(object.startX);
-                                });
-
-                                if (positions.length > 0) {
-                                    var maxPos = Math.max.apply(Math, positions);
-                                    startX = maxPos + (phaser.blockSize) + 20;
-                                }
-
-                                phaser.itemSlots[item] = {
-                                    "frame"     :   game.add.sprite(startX, 5, "item_slot"),
-                                    "item"      :   game.add.sprite(startX + 4, 9, item),
-                                    "text"      :   game.add.text(0, 0, phaser.inventory[item], {
-                                        font: "12px Courier",
-                                        fill: "#fff",
-                                        boundsAlignH: "right",
-                                        boundsAlignV: "middle"
-                                    }),
-                                    "startX"    :   startX,
-                                };
-
-                                phaser.itemSlots[item]["frame"].fixedToCamera = true;
-
-                                phaser.itemSlots[item]["item"].fixedToCamera = true;
-
-                                phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 26, 30, 20);
-                                phaser.itemSlots[item]["text"].fixedToCamera = true;
-                            }
-
-                            phaser.inventory[item]++;
-
-                            phaser.itemSlots[item]["text"].setText(phaser.inventory[item]);
-
-                            sprite.destroy();
-                        }, this);
-                    }
-                    phaser.blocks.add(sprite);
-                }
-            }
-
-            depth++;
-        }
-    }
-}
-
-
-/**
- *
- */
 function handleCollision(phaser, game)
 {
     game.physics.arcade.collide(phaser.player, phaser.blocks);
@@ -218,7 +281,7 @@ function handleCollision(phaser, game)
 /**
  * Check if a block sprite exists at a x and y placement.
  */
-function getBlockInformation(phaser, x, y)
+function blockExistsAt(phaser, x, y)
 {
     var data = false;
     for (var i = 0; i < phaser.blocks.length; i++) {
