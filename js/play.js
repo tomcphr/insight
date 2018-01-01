@@ -56,7 +56,12 @@ window.onload = function () {
             handleCollision(this, game);
 
             handleMovement(this, game);
-            if (this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd) {
+
+
+            var xMatch = this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd;
+            var yMatch = this.player.y < this.renderBoundaries.yStart || this.player.y > this.renderBoundaries.yEnd
+
+            if (xMatch || yMatch) {
                 renderViewPort(this, game);
             }
         },
