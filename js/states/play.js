@@ -13,6 +13,8 @@ play.prototype = {
         this.game.load.image("item_slot", "assets/ui/item_slot_frame.png");
         this.game.load.image("item_equip", "assets/ui/item_equip_frame.png");
 
+        this.game.load.image("blade", "assets/sprites/tools/blade.png");
+
         this.game.time.advancedTiming = true;
     },
 
@@ -49,11 +51,15 @@ play.prototype = {
 
         this.itemSlots = {};
 
-        var itemSelect = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
-        itemSelect.fixedToCamera = true;
+        var itemEquipFrame = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
+        itemEquipFrame.fixedToCamera = true;
+
+        this.itemEquiped = this.game.add.sprite(this.game.camera.width - 82, 18, "player");
+        this.itemEquiped.fixedToCamera = true;
+        this.itemEquiped.scale.setTo(2, 2);
 
         this.healthBar = new HealthBar(this.game, {
-            x: itemSelect.x - 75,
+            x: itemEquipFrame.x - 75,
             y: 25,
             width: 150,
             height: 20,
@@ -178,7 +184,7 @@ function renderViewPort(phaser, game)
 
                     phaser.itemSlots[item] = {
                         "frame"     :   game.add.image(startX, 10, "item_slot"),
-                        "item"      :   game.add.image(startX + 4, 14, item),
+                        "item"      :   game.add.sprite(startX + 4, 14, item),
                         "text"      :   game.add.text(0, 0, phaser.inventory[item], {
                             font: "12px Courier",
                             fill: "#fff",
@@ -191,6 +197,10 @@ function renderViewPort(phaser, game)
                     phaser.itemSlots[item]["frame"].fixedToCamera = true;
 
                     phaser.itemSlots[item]["item"].fixedToCamera = true;
+                    phaser.itemSlots[item]["item"].inputEnabled = true;
+                    phaser.itemSlots[item]["item"].events.onInputDown.add(function (sprite) {
+                        phaser.itemEquiped.loadTexture(sprite.key);
+                    }, this);
 
                     phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 32, 30, 20);
                     phaser.itemSlots[item]["text"].fixedToCamera = true;
