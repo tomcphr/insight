@@ -7,7 +7,9 @@ play.prototype = {
         this.game.load.image("stone", "assets/sprites/blocks/stone.png");
         this.game.load.image("bedrock", "assets/sprites/blocks/bedrock.png");
 
-        this.game.load.image("player", "assets/sprites/player.png");
+        //this.game.load.image("player", "assets/sprites/player.png");
+        this.game.load.spritesheet('player', 'assets/sprites/player.png', 32, 62, 3);
+
         this.game.load.image("enemy", "assets/sprites/enemy.png");
 
         this.game.load.image("item_slot", "assets/ui/item_slot_frame.png");
@@ -36,7 +38,9 @@ play.prototype = {
 
         // Create the player in the middle of the game
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, "player");
+        this.player.animations.add("walk");
         this.player.body.collideWorldBounds = true;
+        this.player.anchor.setTo(.5, .5);
 
         // Add gravity to make it fall
         this.player.body.gravity.y = 950;
@@ -54,9 +58,18 @@ play.prototype = {
         var itemEquipFrame = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
         itemEquipFrame.fixedToCamera = true;
 
-        this.itemEquiped = this.game.add.sprite(this.game.camera.width - 82, 18, "player");
+        this.itemEquiped = this.game.add.sprite(this.game.camera.width - 82, 18);
         this.itemEquiped.fixedToCamera = true;
         this.itemEquiped.scale.setTo(2, 2);
+
+        this.itemEquipedText = this.game.add.text(0, 0, "", {
+            font: "14px Courier",
+            fill: "#000",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        });
+        this.itemEquipedText.setTextBounds(this.game.camera.width - 90, 50, 80, 20);
+        this.itemEquipedText.fixedToCamera = true;
 
         this.healthBar = new HealthBar(this.game, {
             x: itemEquipFrame.x - 75,
@@ -201,6 +214,7 @@ function renderViewPort(phaser, game)
                     phaser.itemSlots[item]["item"].inputEnabled = true;
                     phaser.itemSlots[item]["item"].events.onInputDown.add(function (sprite) {
                         phaser.itemEquiped.loadTexture(sprite.key);
+                        phaser.itemEquipedText.setText(sprite.key);
                     }, this);
 
                     phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 32, 30, 20);
@@ -281,10 +295,17 @@ function handleMovement(phaser, game)
 
     phaser.player.body.velocity.x = 0;
 
+    var movement = false;
     if (phaser.cursor.left.isDown) {
+        phaser.player.animations.play("walk", 7, true);
         phaser.player.body.velocity.x = -movementSpeed;
+        phaser.player.scale.x = -1;
+        movement = true;
     } else if (phaser.cursor.right.isDown) {
+        phaser.player.animations.play("walk", 7, true);
         phaser.player.body.velocity.x = movementSpeed;
+        phaser.player.scale.x = 1;
+        movement = true;
     }
 
     var jumpingSpeed = 250 + (phaser.blockSize * 2);
@@ -292,6 +313,10 @@ function handleMovement(phaser, game)
     // Make the player jump if he is touching the ground
     if (phaser.cursor.up.isDown && phaser.player.body.touching.down) {
         phaser.player.body.velocity.y = -jumpingSpeed;
+    }
+
+    if (!movement) {
+        phaser.player.animations.stop(null, true);
     }
 }
 
