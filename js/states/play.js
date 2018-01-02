@@ -1,7 +1,6 @@
 var play = function (game){};
 
 play.prototype = {
-    // Main functions.
     preload: function () {
         this.game.load.image("grass", "assets/sprites/grass.png");
         this.game.load.image("dirt", "assets/sprites/dirt.png");
