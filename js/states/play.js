@@ -11,6 +11,7 @@ play.prototype = {
         this.game.load.image("enemy", "assets/sprites/enemy.png");
 
         this.game.load.image("item_slot", "assets/ui/item_slot_frame.png");
+        this.game.load.image("item_equip", "assets/ui/item_equip_frame.png");
 
         this.game.time.advancedTiming = true;
     },
@@ -47,6 +48,27 @@ play.prototype = {
         this.inventory = {};
 
         this.itemSlots = {};
+
+        var itemSelect = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
+        itemSelect.fixedToCamera = true;
+
+        this.healthBar = new HealthBar(this.game, {
+            x: itemSelect.x - 75,
+            y: 25,
+            width: 150,
+            height: 20,
+            flipped: true,
+            bg: {
+                color: "#e5e5e5",
+            },
+            bar: {
+                color: "#e60000",
+            },
+            border: {
+                width: 2,
+            }
+        });
+        this.healthBar.setFixedToCamera(true);
 
         renderViewPort(this, this.game);
     },
@@ -141,7 +163,7 @@ function renderViewPort(phaser, game)
                 if (!(item in phaser.inventory)) {
                     phaser.inventory[item] = 0;
 
-                    var startX = 5;
+                    var startX = 10;
 
                     var positions = [];
 
@@ -155,8 +177,8 @@ function renderViewPort(phaser, game)
                     }
 
                     phaser.itemSlots[item] = {
-                        "frame"     :   game.add.image(startX, 5, "item_slot"),
-                        "item"      :   game.add.image(startX + 4, 9, item),
+                        "frame"     :   game.add.image(startX, 10, "item_slot"),
+                        "item"      :   game.add.image(startX + 4, 14, item),
                         "text"      :   game.add.text(0, 0, phaser.inventory[item], {
                             font: "12px Courier",
                             fill: "#fff",
@@ -170,7 +192,7 @@ function renderViewPort(phaser, game)
 
                     phaser.itemSlots[item]["item"].fixedToCamera = true;
 
-                    phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 26, 30, 20);
+                    phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 32, 30, 20);
                     phaser.itemSlots[item]["text"].fixedToCamera = true;
                 }
 
