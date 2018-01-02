@@ -143,9 +143,12 @@ function renderViewPort(phaser, game)
 
         sprite.body.immovable = true;
 
+        sprite.inputEnabled = true;
+
+        sprite.input.useHandCursor = true;
+
         // Allow blocks to be destroyed if it isn't bedrock
         if (object.level != "bedrock") {
-            sprite.inputEnabled = true;
             sprite.events.onInputDown.add(function (sprite, pointer) {
                 var blockX = sprite.x;
                 var playerX = phaser.player.x;
@@ -162,8 +165,6 @@ function renderViewPort(phaser, game)
                 if (blocksAwayY > 2 || blocksAwayY < -2) {
                     return;
                 }
-
-                phaser.blocks.remove(sprite);
 
                 var item = sprite.key;
                 if (!(item in phaser.inventory)) {
@@ -211,6 +212,8 @@ function renderViewPort(phaser, game)
                 phaser.itemSlots[item]["text"].setText(phaser.inventory[item]);
 
                 sprite.destroy();
+
+                console.log(blockExistsAt(phaser, blockX, blockY));
             }, this);
         }
 
@@ -307,12 +310,19 @@ function handleCollision(phaser, game)
  */
 function blockExistsAt(phaser, x, y)
 {
+    var blockRangeStartX = Math.floor((x / phaser.blockSize)) * phaser.blockSize;
+    var blockRangeEndX = Math.ceil((x / phaser.blockSize)) * phaser.blockSize;
+
+    var blockRangeStartY = Math.floor((y / phaser.blockSize)) * phaser.blockSize;
+    var blockRangeEndY = Math.ceil((y / phaser.blockSize)) * phaser.blockSize;
+
     var data = false;
     for (var i = 0; i < phaser.blocks.length; i++) {
         var element = phaser.blocks.getAt(i).body;
-        if (element.x != x || element.y != y) {
+        if ((element.x < blockRangeStartX || element.x > blockRangeEndX) || (element.y < blockRangeStartY || element.y > blockRangeEndY)) {
             continue;
         }
+
         data = true;
     }
 
