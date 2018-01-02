@@ -28,8 +28,6 @@ play.prototype = {
         // Add the physics engine to all game objects
         this.game.world.enableBody = true;
 
-        this.scaleRatio = window.devicePixelRatio / 3;
-
         // Variable to store the arrow key pressed
         this.cursor = this.game.input.keyboard.createCursorKeys();
 
