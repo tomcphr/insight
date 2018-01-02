@@ -127,11 +127,11 @@ function renderViewPort(phaser, game)
                 var playerY = phaser.player.y;
                 var blocksAwayY = ((blockY - playerY) / phaser.blockSize) | 0;
 
-                if (blocksAwayX > 1 || blocksAwayX < -1) {
+                if (blocksAwayX > 2 || blocksAwayX < -2) {
                     return;
                 }
 
-                if (blocksAwayY > 1 || blocksAwayY < -1) {
+                if (blocksAwayY > 2 || blocksAwayY < -2) {
                     return;
                 }
 
