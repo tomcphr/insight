@@ -1,85 +1,76 @@
-window.onload = function () {
-    var playState = {
-        preload: function () {
-            game.load.image("grass", "assets/sprites/grass.png");
-            game.load.image("dirt", "assets/sprites/dirt.png");
-            game.load.image("stone", "assets/sprites/stone.png");
-            game.load.image("bedrock", "assets/sprites/bedrock.png");
+var play = function (game){};
 
-            game.load.image("player", "assets/sprites/player.png");
-            game.load.image("enemy", "assets/sprites/enemy.png");
+play.prototype = {
+    // Main functions.
+    preload: function () {
+        this.game.load.image("grass", "assets/sprites/grass.png");
+        this.game.load.image("dirt", "assets/sprites/dirt.png");
+        this.game.load.image("stone", "assets/sprites/stone.png");
+        this.game.load.image("bedrock", "assets/sprites/bedrock.png");
 
-            game.load.image("item_slot", "assets/ui/item_slot_frame.png");
+        this.game.load.image("player", "assets/sprites/player.png");
+        this.game.load.image("enemy", "assets/sprites/enemy.png");
 
-            game.time.advancedTiming = true;
-        },
+        this.game.load.image("item_slot", "assets/ui/item_slot_frame.png");
 
-        create: function () {
-            game.stage.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        this.game.time.advancedTiming = true;
+    },
 
-            game.stage.backgroundColor = "#87CEFA";
+    create: function () {
+        this.game.stage.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
-            game.world.setBounds(0, 0, 4000, 4000);
+        this.game.stage.backgroundColor = "#87CEFA";
 
-            // Start the Arcade physics system (for movements and collisions)
-            game.physics.startSystem(Phaser.Physics.ARCADE);
+        this.game.world.setBounds(0, 0, 4000, 4000);
 
-            // Add the physics engine to all game objects
-            game.world.enableBody = true;
+        // Start the Arcade physics system (for movements and collisions)
+        this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
-            this.scaleRatio = window.devicePixelRatio / 3;
+        // Add the physics engine to all game objects
+        this.game.world.enableBody = true;
 
-            // Variable to store the arrow key pressed
-            this.cursor = game.input.keyboard.createCursorKeys();
+        this.scaleRatio = window.devicePixelRatio / 3;
 
-            // Create the player in the middle of the game
-            this.player = game.add.sprite(game.world.centerX, game.world.centerY, "player");
-            this.player.body.collideWorldBounds = true;
+        // Variable to store the arrow key pressed
+        this.cursor = this.game.input.keyboard.createCursorKeys();
 
-            // Add gravity to make it fall
-            this.player.body.gravity.y = 950;
+        // Create the player in the middle of the game
+        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, "player");
+        this.player.body.collideWorldBounds = true;
 
-            game.camera.follow(this.player);
+        // Add gravity to make it fall
+        this.player.body.gravity.y = 950;
 
-            this.blocks = this.add.group();
+        this.game.camera.follow(this.player);
 
-            this.blockSize = 32;
+        this.blocks = this.add.group();
 
-            this.inventory = {};
+        this.blockSize = 32;
 
-            this.itemSlots = {};
+        this.inventory = {};
 
-            renderViewPort(this, game);
-        },
+        this.itemSlots = {};
 
-        update: function () {
-            handleCollision(this, game);
+        renderViewPort(this, this.game);
+    },
 
-            handleMovement(this, game);
+    update: function () {
+        handleCollision(this, this.game);
 
-            var xMatch = this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd;
-            var yMatch = this.player.y < this.renderBoundaries.yStart || this.player.y > this.renderBoundaries.yEnd;
+        handleMovement(this, this.game);
 
-            if (xMatch || yMatch) {
-                renderViewPort(this, game);
-            }
-        },
+        var xMatch = this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd;
+        var yMatch = this.player.y < this.renderBoundaries.yStart || this.player.y > this.renderBoundaries.yEnd;
 
-        render: function () {
-            game.debug.text(game.time.fps || '--', 5, height - 10, "#00ff00");
+        if (xMatch || yMatch) {
+            renderViewPort(this, this.game);
         }
-    };
+    },
 
-    var width = 800;
-    var height = 480;
-
-    var game = new Phaser.Game(width, height, Phaser.AUTO, "playArea");
-
-    game.state.add("play", playState);
-
-    game.state.start("play");
-}
-
+    render: function () {
+        this.game.debug.text(this.game.time.fps || '--', 5, this.game.camera.height - 10, "#00ff00");
+    }
+};
 
 /**
  *
@@ -90,11 +81,11 @@ function renderViewPort(phaser, game)
         phaser.level = getLevelInformation(phaser, game);
     }
 
-    var startCameraX = phaser.player.x - (game.camera.width);
-    var endCameraX = phaser.player.x + (game.camera.width);
+    var startCameraX = phaser.player.x - game.camera.width;
+    var endCameraX = phaser.player.x + game.camera.width;
 
-    var startCameraY = phaser.player.y - (game.camera.height);
-    var endCameraY = phaser.player.y + (game.camera.height);
+    var startCameraY = phaser.player.y - game.camera.height;
+    var endCameraY = phaser.player.y + game.camera.height;
 
     phaser.renderBoundaries = {
         "xStart"    :   startCameraX + (game.camera.width / 2),
