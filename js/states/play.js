@@ -2,10 +2,10 @@ var play = function (game){};
 
 play.prototype = {
     preload: function () {
-        this.game.load.image("grass", "assets/sprites/grass.png");
-        this.game.load.image("dirt", "assets/sprites/dirt.png");
-        this.game.load.image("stone", "assets/sprites/stone.png");
-        this.game.load.image("bedrock", "assets/sprites/bedrock.png");
+        this.game.load.image("grass", "assets/sprites/blocks/grass.png");
+        this.game.load.image("dirt", "assets/sprites/blocks/dirt.png");
+        this.game.load.image("stone", "assets/sprites/blocks/stone.png");
+        this.game.load.image("bedrock", "assets/sprites/blocks/bedrock.png");
 
         this.game.load.image("player", "assets/sprites/player.png");
         this.game.load.image("enemy", "assets/sprites/enemy.png");
