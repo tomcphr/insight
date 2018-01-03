@@ -107,32 +107,34 @@ play.prototype = {
                     var mouseY = this.game.input.activePointer.positionDown.y + this.game.camera.y;
 
                     var blockX = Math.floor((mouseX / this.blockSize)) * this.blockSize;
-                    var blockY = Math.floor((mouseY / this.blockSize)) * this.blockSize;
+                    var blockY = (Math.floor((mouseY / this.blockSize)) * this.blockSize) - (this.blockSize / 2);
 
-                    this.level.push({
-                        "x"     :   blockX,
-                        "y"     :   blockY,
-                        "level" :   texture
-                    });
+                    if (!blockExistsAt(this, blockX, blockY)) {
+                        this.level.push({
+                            "x"     :   blockX,
+                            "y"     :   blockY,
+                            "level" :   texture
+                        });
 
-                    this.inventory[texture]--;
-                    if (this.inventory[texture] > 0) {
-                        this.itemSlots[texture]["text"].setText(this.inventory[texture]);
-                    } else {
-                        this.itemSlots[texture]["frame"].destroy();
-                        this.itemSlots[texture]["item"].destroy();
-                        this.itemSlots[texture]["text"].destroy();
+                        this.inventory[texture]--;
+                        if (this.inventory[texture] > 0) {
+                            this.itemSlots[texture]["text"].setText(this.inventory[texture]);
+                        } else {
+                            this.itemSlots[texture]["frame"].destroy();
+                            this.itemSlots[texture]["item"].destroy();
+                            this.itemSlots[texture]["text"].destroy();
 
-                        this.itemEquiped.loadTexture(null);
-                        this.itemEquipedText.destroy();
+                            this.itemEquiped.loadTexture(null);
+                            this.itemEquipedText.destroy();
 
-                        delete this.itemSlots[texture];
-                        delete this.inventory[texture];
+                            delete this.itemSlots[texture];
+                            delete this.inventory[texture];
+                        }
+
+                        renderViewPort(this, this.game);
+
+                        this.game.input.activePointer.leftButton.isDown = false;
                     }
-
-                    renderViewPort(this, this.game);
-
-                    this.game.input.activePointer.leftButton.isDown = false;
                 }
             }
         }
