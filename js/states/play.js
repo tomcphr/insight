@@ -41,6 +41,7 @@ play.prototype = {
         this.player.animations.add("walk");
         this.player.body.collideWorldBounds = true;
         this.player.anchor.setTo(.5, .5);
+        this.player.inputEnabled = true;
 
         // Add gravity to make it fall
         this.player.body.gravity.y = 950;
@@ -98,7 +99,7 @@ play.prototype = {
         handleMovement(this, this.game);
 
         if (this.game.input.activePointer.leftButton.isDown) {
-            var object = this.game.input.mousePointer.targetObject;
+            var object = this.game.input.activePointer.targetObject;
             if (!object && ("key" in this.itemEquiped)) {
                 var texture = this.itemEquiped.key;
                 if (texture in this.inventory) {
