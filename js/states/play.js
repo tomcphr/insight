@@ -97,6 +97,45 @@ play.prototype = {
 
         handleMovement(this, this.game);
 
+        if (this.game.input.activePointer.leftButton.isDown) {
+            var object = this.game.input.mousePointer.targetObject;
+            if (!object && ("key" in this.itemEquiped)) {
+                var texture = this.itemEquiped.key;
+                if (texture in this.inventory) {
+                    var mouseX = this.game.input.activePointer.positionDown.x + this.game.camera.x;
+                    var mouseY = this.game.input.activePointer.positionDown.y + this.game.camera.y;
+
+                    var blockX = Math.floor((mouseX / this.blockSize)) * this.blockSize;
+                    var blockY = Math.floor((mouseY / this.blockSize)) * this.blockSize;
+
+                    this.level.push({
+                        "x"     :   blockX,
+                        "y"     :   blockY,
+                        "level" :   texture
+                    });
+
+                    this.inventory[texture]--;
+                    if (this.inventory[texture] > 0) {
+                        this.itemSlots[texture]["text"].setText(this.inventory[texture]);
+                    } else {
+                        this.itemSlots[texture]["frame"].destroy();
+                        this.itemSlots[texture]["item"].destroy();
+                        this.itemSlots[texture]["text"].destroy();
+
+                        this.itemEquiped.loadTexture(null);
+                        this.itemEquipedText.destroy();
+
+                        delete this.itemSlots[texture];
+                        delete this.inventory[texture];
+                    }
+
+                    renderViewPort(this, this.game);
+
+                    this.game.input.activePointer.leftButton.isDown = false;
+                }
+            }
+        }
+
         var xMatch = this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd;
         var yMatch = this.player.y < this.renderBoundaries.yStart || this.player.y > this.renderBoundaries.yEnd;
 
@@ -226,8 +265,6 @@ function renderViewPort(phaser, game)
                 phaser.itemSlots[item]["text"].setText(phaser.inventory[item]);
 
                 sprite.destroy();
-
-                console.log(blockExistsAt(phaser, blockX, blockY));
             }, this);
         }
 
