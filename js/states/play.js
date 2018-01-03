@@ -2,6 +2,7 @@ var play = function (game){};
 
 play.prototype = {
     preload: function () {
+        this.game.load.image("air", "assets/sprites/blocks/air.png");
         this.game.load.image("grass", "assets/sprites/blocks/grass.png");
         this.game.load.image("dirt", "assets/sprites/blocks/dirt.png");
         this.game.load.image("stone", "assets/sprites/blocks/stone.png");
@@ -23,8 +24,6 @@ play.prototype = {
     create: function () {
         this.game.stage.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
-        this.game.stage.backgroundColor = "#87CEFA";
-
         this.game.world.setBounds(0, 0, 4000, 4000);
 
         // Start the Arcade physics system (for movements and collisions)
@@ -36,25 +35,24 @@ play.prototype = {
         // Variable to store the arrow key pressed
         this.cursor = this.game.input.keyboard.createCursorKeys();
 
+        this.blockSize = 32;
+
         // Create the player in the middle of the game
-        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, "player");
+        this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY - (this.blockSize * 2), "player");
         this.player.animations.add("walk");
         this.player.body.collideWorldBounds = true;
         this.player.anchor.setTo(.5, .5);
-        this.player.inputEnabled = true;
 
         // Add gravity to make it fall
-        this.player.body.gravity.y = 950;
+        this.player.body.gravity.y = 2000;
 
         this.game.camera.follow(this.player);
 
         this.blocks = this.add.group();
 
-        this.blockSize = 32;
-
-        this.inventory = {};
-
-        this.itemSlots = {};
+        this.inventory = {
+            "fist"  :   {},
+        };
 
         var itemEquipFrame = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
         itemEquipFrame.fixedToCamera = true;
@@ -90,6 +88,10 @@ play.prototype = {
         });
         this.healthBar.setFixedToCamera(true);
 
+        this.level = generateLevelInformation(this, this.game);
+
+        renderInventory(this, this.game);
+
         renderViewPort(this, this.game);
     },
 
@@ -98,52 +100,43 @@ play.prototype = {
 
         handleMovement(this, this.game);
 
-        if (this.game.input.activePointer.leftButton.isDown) {
-            var object = this.game.input.activePointer.targetObject;
-            if (!object && ("key" in this.itemEquiped)) {
-                var texture = this.itemEquiped.key;
-                if (texture in this.inventory) {
-                    var mouseX = this.game.input.activePointer.positionDown.x + this.game.camera.x;
-                    var mouseY = this.game.input.activePointer.positionDown.y + this.game.camera.y;
-
-                    var blockX = Math.floor((mouseX / this.blockSize)) * this.blockSize;
-                    var blockY = (Math.floor((mouseY / this.blockSize)) * this.blockSize) - (this.blockSize / 2);
-
-                    if (!blockExistsAt(this, blockX, blockY)) {
-                        this.level.push({
-                            "x"     :   blockX,
-                            "y"     :   blockY,
-                            "level" :   texture
-                        });
-
-                        this.inventory[texture]--;
-                        if (this.inventory[texture] > 0) {
-                            this.itemSlots[texture]["text"].setText(this.inventory[texture]);
-                        } else {
-                            this.itemSlots[texture]["frame"].destroy();
-                            this.itemSlots[texture]["item"].destroy();
-                            this.itemSlots[texture]["text"].destroy();
-
-                            this.itemEquiped.loadTexture(null);
-                            this.itemEquipedText.destroy();
-
-                            delete this.itemSlots[texture];
-                            delete this.inventory[texture];
-                        }
-
-                        renderViewPort(this, this.game);
-
-                        this.game.input.activePointer.leftButton.isDown = false;
-                    }
-                }
-            }
-        }
-
         var xMatch = this.player.x < this.renderBoundaries.xStart || this.player.x > this.renderBoundaries.xEnd;
         var yMatch = this.player.y < this.renderBoundaries.yStart || this.player.y > this.renderBoundaries.yEnd;
 
         if (xMatch || yMatch) {
             renderViewPort(this, this.game);
+        }
+
+        if (this.game.input.activePointer.leftButton.isDown) {
+            var object = this.game.input.activePointer.targetObject;
+            if (object !== null) {
+                if (object.sprite.key == "air" && this.itemEquiped.key) {
+                    var blockX = object.sprite.x;
+                    var blockY = object.sprite.y;
+                    if (!isBlockWithinRadius(this, blockX, blockY)) {
+                        return;
+                    }
+
+                    var texture = this.itemEquiped.key;
+                    if (texture in this.inventory) {
+                        var key = blockX + "|" + blockY;
+
+                        this.level[key].block = texture;
+
+                        object.sprite.loadTexture(texture);
+
+                        object.sprite.events.onInputDown.add(removeBlock, {"phaser": this, "game": this.game, "key": key});
+
+                        this.blocks.add(object.sprite);
+
+                        this.inventory[texture]["count"]--;
+
+                        renderInventory(this, this.game);
+
+                        this.game.input.activePointer.leftButton.isDown = false;
+                    }
+                }
+            }
         }
     },
 
@@ -157,123 +150,67 @@ play.prototype = {
  */
 function renderViewPort(phaser, game)
 {
-    if (!phaser.level) {
-        phaser.level = getLevelInformation(phaser, game);
-    }
+    var renderFromPlayerX = game.camera.width;
+    var renderFromPlayerY = game.camera.height;
 
-    var startCameraX = phaser.player.x - game.camera.width;
-    var endCameraX = phaser.player.x + game.camera.width;
+    var startCameraX = phaser.player.x - renderFromPlayerX;
+    var endCameraX = phaser.player.x + renderFromPlayerX;
 
-    var startCameraY = phaser.player.y - game.camera.height;
-    var endCameraY = phaser.player.y + game.camera.height;
+    var startCameraY = phaser.player.y - renderFromPlayerY;
+    var endCameraY = phaser.player.y + renderFromPlayerY;
 
     phaser.renderBoundaries = {
-        "xStart"    :   startCameraX + (game.camera.width / 2),
-        "xEnd"      :   endCameraX - (game.camera.width / 2),
-        "yStart"    :   startCameraY + (game.camera.height / 2),
-        "yEnd"      :   endCameraY - (game.camera.height / 2),
+        "xStart"    :   startCameraX + (renderFromPlayerX / 1.8),
+        "xEnd"      :   endCameraX - (renderFromPlayerX / 1.8),
+        "yStart"    :   startCameraY + (renderFromPlayerY / 1.8),
+        "yEnd"      :   endCameraY - (renderFromPlayerY / 1.8),
     };
+    phaser.blocks.removeAll();
 
-    $.each(phaser.level, function (key, object) {
+    var keys = Object.keys(phaser.level);
+    $.each(keys, function (index, key) {
+        var object = phaser.level[key];
+
         if (object.x < startCameraX || object.x > endCameraX) {
-            if (object.sprite) {
-                object.sprite.kill();
+            if (object.entity) {
+                object.entity.kill();
             }
             return;
         }
 
         if (object.y < startCameraY || object.y > endCameraY) {
-            if (object.sprite) {
-                object.sprite.kill();
+            if (object.entity) {
+                object.entity.kill();
             }
             return;
         }
 
-        if (object.sprite) {
-            object.sprite.revive();
+        if (object.entity) {
+            object.entity.revive();
+            if (object.block != "air") {
+                phaser.blocks.add(object.entity);
+            }
             return;
         }
 
-        var sprite = phaser.add.sprite(object.x, object.y, object.level);
 
-        sprite.body.immovable = true;
+        var entity = phaser.add.sprite(object.x, object.y, object.block);
+        entity.sendToBack();
 
-        sprite.inputEnabled = true;
+        entity.body.immovable = true;
 
-        sprite.input.useHandCursor = true;
+        entity.inputEnabled = true;
 
         // Allow blocks to be destroyed if it isn't bedrock
-        if (object.level != "bedrock") {
-            sprite.events.onInputDown.add(function (sprite, pointer) {
-                var blockX = sprite.x;
-                var playerX = phaser.player.x;
-                var blocksAwayX = ((blockX - playerX) / phaser.blockSize) | 0;
-
-                var blockY = sprite.y;
-                var playerY = phaser.player.y;
-                var blocksAwayY = ((blockY - playerY) / phaser.blockSize) | 0;
-
-                if (blocksAwayX > 2 || blocksAwayX < -2) {
-                    return;
-                }
-
-                if (blocksAwayY > 2 || blocksAwayY < -2) {
-                    return;
-                }
-
-                var item = sprite.key;
-                if (!(item in phaser.inventory)) {
-                    phaser.inventory[item] = 0;
-
-                    var startX = 10;
-
-                    var positions = [];
-
-                    $.each(phaser.itemSlots, function (key, object) {
-                        positions.push(object.startX);
-                    });
-
-                    if (positions.length > 0) {
-                        var maxPos = Math.max.apply(Math, positions);
-                        startX = maxPos + (phaser.blockSize) + 20;
-                    }
-
-                    phaser.itemSlots[item] = {
-                        "frame"     :   game.add.image(startX, 10, "item_slot"),
-                        "item"      :   game.add.sprite(startX + 4, 14, item),
-                        "text"      :   game.add.text(0, 0, phaser.inventory[item], {
-                            font: "12px Courier",
-                            fill: "#fff",
-                            boundsAlignH: "right",
-                            boundsAlignV: "middle"
-                        }),
-                        "startX"    :   startX,
-                    };
-
-                    phaser.itemSlots[item]["frame"].fixedToCamera = true;
-
-                    phaser.itemSlots[item]["item"].fixedToCamera = true;
-                    phaser.itemSlots[item]["item"].inputEnabled = true;
-                    phaser.itemSlots[item]["item"].events.onInputDown.add(function (sprite) {
-                        phaser.itemEquiped.loadTexture(sprite.key);
-                        phaser.itemEquipedText.setText(sprite.key);
-                    }, this);
-
-                    phaser.itemSlots[item]["text"].setTextBounds(startX + 4, 32, 30, 20);
-                    phaser.itemSlots[item]["text"].fixedToCamera = true;
-                }
-
-                phaser.inventory[item]++;
-
-                phaser.itemSlots[item]["text"].setText(phaser.inventory[item]);
-
-                sprite.destroy();
-            }, this);
+        if (object.block != "bedrock" && object.block != "air") {
+            entity.events.onInputDown.add(removeBlock, {"phaser": phaser, "game": game, "key": key});
         }
 
-        phaser.blocks.add(sprite);
+        if (object.block != "air") {
+            phaser.blocks.add(entity);
+        }
 
-        phaser.level[key]["sprite"] = sprite;
+        phaser.level[key]["entity"] = entity;
     });
 }
 
@@ -281,9 +218,13 @@ function renderViewPort(phaser, game)
 /**
  *
  */
-function getLevelInformation(phaser, game)
+function generateLevelInformation(phaser, game)
 {
-    var data = [];
+    var worldWidth = game.world.bounds.width;
+    var worldHeight = game.world.bounds.height;
+
+    var totalBlocksX = Math.ceil((worldWidth / phaser.blockSize) * 1) / 1;
+    var totalBlocksY = Math.ceil((worldHeight / phaser.blockSize) * 1) / 1;
 
     var levels = {
         "grass"     :   1,
@@ -292,33 +233,46 @@ function getLevelInformation(phaser, game)
         "bedrock"   :   10,
     };
 
-    var worldWidth = game.world.bounds.width;
-
     var localChunkX = phaser.player.x - (worldWidth / 2);
-    var localChunkY = game.world.centerY + (phaser.blockSize * 2);
+    var localChunkY = game.world.centerY + (phaser.blockSize / 2);
 
-    var totalBlocks = Math.ceil((worldWidth / phaser.blockSize) * 1) / 1;
+    var data = {};
 
     var depth = 0;
     for (var level in levels) {
         var rows = levels[level];
 
         for (var row = 0; row < rows; row++) {
-            for (var block = 0; block < totalBlocks; block++) {
+            for (var block = 0; block < totalBlocksX; block++) {
                 var blockX = localChunkX + (block * phaser.blockSize);
                 var blockY = localChunkY + (depth * phaser.blockSize);
 
-                // Ensure that no block already exists at the X and Y coords
-                if (!blockExistsAt(phaser, blockX, blockY)) {
-                    data.push({
-                        "level" :   level,
-                        "x"     :   blockX,
-                        "y"     :   blockY
-                    });
-                }
+                data[blockX + "|" + blockY] = {
+                    "block" :   level,
+                    "x"     :   blockX,
+                    "y"     :   blockY
+                };
             }
 
             depth++;
+        }
+    }
+
+    for (var row = 0; row < totalBlocksY; row++) {
+        for (var block = 0; block < totalBlocksX; block++) {
+            var blockX = (block * phaser.blockSize);
+            var blockY = (row * phaser.blockSize);
+
+            var key = blockX + "|" + blockY;
+            if (key in data) {
+                continue;
+            }
+
+            data[blockX + "|" + blockY] = {
+                "block" :   "air",
+                "x"     :   blockX,
+                "y"     :   blockY
+            };
         }
     }
 
@@ -348,7 +302,7 @@ function handleMovement(phaser, game)
         movement = true;
     }
 
-    var jumpingSpeed = 250 + (phaser.blockSize * 2);
+    var jumpingSpeed = 400 + (phaser.blockSize * 2);
 
     // Make the player jump if he is touching the ground
     if (phaser.cursor.up.isDown && phaser.player.body.touching.down) {
@@ -371,25 +325,113 @@ function handleCollision(phaser, game)
 
 
 /**
- * Check if a block sprite exists at a x and y placement.
+ *
  */
-function blockExistsAt(phaser, x, y)
+function removeBlock(sprite, pointer)
 {
-    var blockRangeStartX = Math.floor((x / phaser.blockSize)) * phaser.blockSize;
-    var blockRangeEndX = Math.ceil((x / phaser.blockSize)) * phaser.blockSize;
+    var item = sprite.key;
 
-    var blockRangeStartY = Math.floor((y / phaser.blockSize)) * phaser.blockSize;
-    var blockRangeEndY = Math.ceil((y / phaser.blockSize)) * phaser.blockSize;
-
-    var data = false;
-    for (var i = 0; i < phaser.blocks.length; i++) {
-        var element = phaser.blocks.getAt(i).body;
-        if ((element.x < blockRangeStartX || element.x > blockRangeEndX) || (element.y < blockRangeStartY || element.y > blockRangeEndY)) {
-            continue;
-        }
-
-        data = true;
+    // Because the input event can be called later when the level has been changed
+    // We want to redo the check to ensure we are not trying to remove an air or bedrock block
+    if (item == "bedrock" || item == "air") {
+        return;
     }
 
-    return data;
+    if (!isBlockWithinRadius(this.phaser, sprite.x, sprite.y)) {
+        return;
+    }
+
+    if (!(item in this.phaser.inventory)) {
+        this.phaser.inventory[item] = {
+            "count" :   0,
+        };
+    }
+
+    this.phaser.level[this.key].block = "air";
+
+    sprite.loadTexture("air");
+
+    this.phaser.inventory[item]["count"]++;
+
+    renderInventory(this.phaser, this.game);
+
+    this.phaser.blocks.remove(sprite);
+    this.game.add.existing(sprite);
+
+    sprite.sendToBack();
+}
+
+
+/**
+ *
+ */
+function isBlockWithinRadius(phaser, x, y)
+{
+    var playerX = phaser.player.x;
+    var blocksAwayX = ((x - playerX) / phaser.blockSize) | 0;
+
+    var playerY = phaser.player.y;
+    var blocksAwayY = ((y - playerY) / phaser.blockSize) | 0;
+
+    if (blocksAwayX > 2 || blocksAwayX < -2) {
+        return false;
+    }
+
+    if (blocksAwayY > 2 || blocksAwayY < -2) {
+        return false;
+    }
+
+    return true;
+}
+
+
+/**
+ *
+ */
+function renderInventory(phaser, game)
+{
+    var startX = 10;
+
+    $.each(phaser.inventory, function (item, object) {
+        if (object.sprite) {
+            object.sprite.frame.destroy();
+            object.sprite.item.destroy();
+            object.sprite.text.destroy();
+        }
+
+        if (object.count == 0) {
+            phaser.itemEquiped.loadTexture(null);
+            phaser.itemEquipedText.destroy();
+            delete phaser.inventory[item];
+            startX = 10;
+        } else {
+            var frame = game.add.image(startX, 10, "item_slot");
+            frame.fixedToCamera = true;
+
+            var block = game.add.sprite(startX + 4, 14, item);
+            block.fixedToCamera = true;
+            block.inputEnabled = true;
+            block.events.onInputDown.add(function (sprite) {
+                this.itemEquiped.loadTexture(sprite.key);
+                this.itemEquipedText.setText(sprite.key);
+            }, phaser);
+
+            var text = game.add.text(0, 0, object.count, {
+                font: "12px Courier",
+                fill: "#fff",
+                boundsAlignH: "right",
+                boundsAlignV: "middle"
+            })
+            text.setTextBounds(startX + 4, 32, 30, 20);
+            text.fixedToCamera = true;
+
+            phaser.inventory[item]["sprite"] = {
+                "frame" :   frame,
+                "item"  :   block,
+                "text"  :   text,
+            };
+        }
+
+        startX = startX + (phaser.blockSize * 1.5);
+    });
 }
