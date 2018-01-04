@@ -8,7 +8,6 @@ play.prototype = {
         this.game.load.image("stone", "assets/sprites/blocks/stone.png");
         this.game.load.image("bedrock", "assets/sprites/blocks/bedrock.png");
 
-        //this.game.load.image("player", "assets/sprites/player.png");
         this.game.load.spritesheet('player', 'assets/sprites/player.png', 32, 62, 3);
 
         this.game.load.image("enemy", "assets/sprites/enemy.png");
@@ -26,24 +25,19 @@ play.prototype = {
 
         this.game.world.setBounds(0, 0, 4000, 4000);
 
-        // Start the Arcade physics system (for movements and collisions)
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        // Add the physics engine to all game objects
         this.game.world.enableBody = true;
 
-        // Variable to store the arrow key pressed
         this.cursor = this.game.input.keyboard.createCursorKeys();
 
         this.blockSize = 32;
 
-        // Create the player in the middle of the game
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY - (this.blockSize * 2), "player");
         this.player.animations.add("walk");
         this.player.body.collideWorldBounds = true;
         this.player.anchor.setTo(.5, .5);
 
-        // Add gravity to make it fall
         this.player.body.gravity.y = 2000;
 
         this.game.camera.follow(this.player);
@@ -205,7 +199,7 @@ function renderViewPort(phaser, game)
 
         entity.inputEnabled = true;
 
-        // Allow blocks to be destroyed if it isn't bedrock
+        // Allow blocks to be destroyed if it isn't air or bedrock
         if (object.block != "bedrock" && object.block != "air") {
             entity.events.onInputDown.add(removeBlock, {"phaser": phaser, "game": game, "key": key});
         }
