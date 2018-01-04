@@ -52,6 +52,8 @@ play.prototype = {
         lightSprite.blendMode = Phaser.blendModes.MULTIPLY;
         lightSprite.fixedToCamera = true;
 
+        this.dropThreshold = 5;
+
         this.inventory = {
             "blank" :   {},
         };
@@ -90,6 +92,8 @@ play.prototype = {
         });
         this.healthBar.setFixedToCamera(true);
 
+        this.playerHealth = 100;
+
         this.level = generateLevelInformation(this, this.game);
 
         renderInventory(this, this.game);
@@ -106,6 +110,10 @@ play.prototype = {
     },
 
     update: function () {
+        if (this.playerHealth <= 0) {
+            this.game.state.start(this.game.state.current);
+        }
+
         handleLighting(this, this.game);
 
         handleCollision(this, this.game);
@@ -329,6 +337,38 @@ function handleMovement(phaser, game)
 function handleCollision(phaser, game)
 {
     game.physics.arcade.collide(phaser.player, phaser.blocks);
+
+    // If we are not touching the some ground, we want to process fall damage.
+    if (!phaser.player.body.touching.down) {
+        // If we haven't processed a drop before or the player's Y is increasing, log the current Y coord
+        if (!phaser.dropStartY || (phaser.player.y < phaser.dropStartY)) {
+            phaser.dropStartY = phaser.player.y;
+        }
+    } else {
+        // If there has been a drop when it is touching the ground, apply damage.
+        if (phaser.dropStartY) {
+            phaser.dropEndY = phaser.player.y;
+
+            // Calculate the drop distance and convert it to a number of blocks fallen.
+            var fallDistance = (phaser.dropEndY - phaser.dropStartY);
+
+            var blocksFallen = Math.ceil((fallDistance / phaser.blockSize));
+
+            // We are going to allow a five block threshold before we take damage
+            if (blocksFallen > phaser.dropThreshold) {
+                // Then we are going to take 5% damage for every 2 blocks after that.
+                var healthDamagePercent = (Math.ceil((blocksFallen - phaser.dropThreshold) / 2)) * phaser.dropThreshold;
+
+                phaser.playerHealth -= healthDamagePercent;
+
+                phaser.healthBar.setPercent(phaser.playerHealth);
+            }
+
+            // Reset the drop variables so the next drop starts off fresh.
+            phaser.dropStartY = null;
+            phaser.dropEndY = null;
+        }
+    }
 }
 
 
