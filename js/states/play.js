@@ -15,6 +15,7 @@ play.prototype = {
         this.game.load.image("item_slot", "assets/ui/item_slot_frame.png");
         this.game.load.image("item_equip", "assets/ui/item_equip_frame.png");
 
+        this.game.load.image("blank", "assets/sprites/tools/blank.png");
         this.game.load.image("blade", "assets/sprites/tools/blade.png");
 
         this.game.time.advancedTiming = true;
@@ -45,7 +46,7 @@ play.prototype = {
         this.blocks = this.add.group();
 
         this.inventory = {
-            "fist"  :   {},
+            "blank" :   {},
         };
 
         var itemEquipFrame = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
@@ -55,7 +56,7 @@ play.prototype = {
         this.itemEquiped.fixedToCamera = true;
         this.itemEquiped.scale.setTo(2, 2);
 
-        this.itemEquipedText = this.game.add.text(0, 0, "", {
+        this.itemEquipedText = this.game.add.text(0, 0, "blank", {
             font: "14px Courier",
             fill: "#000",
             boundsAlignH: "center",
@@ -104,7 +105,7 @@ play.prototype = {
         if (this.game.input.activePointer.leftButton.isDown) {
             var object = this.game.input.activePointer.targetObject;
             if (object !== null) {
-                if (object.sprite.key == "air" && this.itemEquiped.key) {
+                if (object.sprite.key == "air" && this.itemEquiped.key && this.itemEquiped.key != "blank") {
                     var blockX = object.sprite.x;
                     var blockY = object.sprite.y;
                     if (!isBlockWithinRadius(this, blockX, blockY)) {
@@ -331,7 +332,11 @@ function removeBlock(sprite, pointer)
 
     // Because the input event can be called later when the level has been changed
     // We want to redo the check to ensure we are not trying to remove an air or bedrock block
-    if (item == "bedrock" || item == "air") {
+    if (item == "bedrock" || item == "air" && this.phaser.itemEquiped == "blank") {
+        return;
+    }
+
+    if (this.phaser.itemEquiped == "blank") {
         return;
     }
 
