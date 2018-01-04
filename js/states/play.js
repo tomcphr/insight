@@ -371,17 +371,19 @@ function removeBlock(sprite, pointer)
  */
 function isBlockWithinRadius(phaser, x, y)
 {
+    var radius = 3;
+
     var playerX = phaser.player.x;
     var blocksAwayX = ((x - playerX) / phaser.blockSize) | 0;
 
     var playerY = phaser.player.y;
     var blocksAwayY = ((y - playerY) / phaser.blockSize) | 0;
 
-    if (blocksAwayX > 2 || blocksAwayX < -2) {
+    if (blocksAwayX > radius || blocksAwayX < -radius) {
         return false;
     }
 
-    if (blocksAwayY > 2 || blocksAwayY < -2) {
+    if (blocksAwayY > radius || blocksAwayY < -radius) {
         return false;
     }
 
