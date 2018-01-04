@@ -117,6 +117,10 @@ play.prototype = {
                         return;
                     }
 
+                    if (object.sprite.overlap(this.player)) {
+                        return;
+                    }
+
                     var texture = this.itemEquiped.key;
                     if (texture in this.inventory) {
                         var key = blockX + "|" + blockY;
