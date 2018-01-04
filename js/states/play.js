@@ -332,7 +332,7 @@ function removeBlock(sprite, pointer)
 
     // Because the input event can be called later when the level has been changed
     // We want to redo the check to ensure we are not trying to remove an air or bedrock block
-    if (item == "bedrock" || item == "air" && this.phaser.itemEquiped == "blank") {
+    if (item == "bedrock" || item == "air") {
         return;
     }
 
