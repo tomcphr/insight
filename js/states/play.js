@@ -141,6 +141,8 @@ play.prototype = {
 
     render: function () {
         this.game.debug.text(this.game.time.fps || '--', 5, this.game.camera.height - 10, "#00ff00");
+
+        this.game.debug.bodyInfo(this.player, 50, this.game.camera.height - 90, "#00ff00");
     }
 };
 
