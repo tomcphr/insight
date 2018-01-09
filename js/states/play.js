@@ -408,7 +408,7 @@ function renderInventory(phaser, game)
 
         if (object.count == 0) {
             phaser.itemEquiped.loadTexture(null);
-            phaser.itemEquipedText.destroy();
+            phaser.itemEquipedText.setText("blank");
             delete phaser.inventory[item];
             startX = 10;
         } else {
