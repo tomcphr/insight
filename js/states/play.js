@@ -59,7 +59,7 @@ play.prototype = {
         var itemEquipFrame = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
         itemEquipFrame.fixedToCamera = true;
 
-        this.itemEquiped = this.game.add.sprite(this.game.camera.width - 82, 18);
+        this.itemEquiped = this.game.add.sprite(this.game.camera.width - 82, 18, "blank");
         this.itemEquiped.fixedToCamera = true;
         this.itemEquiped.scale.setTo(2, 2);
 
@@ -118,42 +118,6 @@ play.prototype = {
         if (xMatch || yMatch) {
             renderViewPort(this, this.game);
         }
-
-        if (this.game.input.activePointer.leftButton.isDown) {
-            var object = this.game.input.activePointer.targetObject;
-            if (object !== null) {
-                if (object.sprite.key == "air" && this.itemEquiped.key && this.itemEquiped.key != "blank") {
-                    var blockX = object.sprite.x;
-                    var blockY = object.sprite.y;
-                    if (!isBlockWithinRadius(this, blockX, blockY)) {
-                        return;
-                    }
-
-                    if (object.sprite.overlap(this.player)) {
-                        return;
-                    }
-
-                    var texture = this.itemEquiped.key;
-                    if (texture in this.inventory) {
-                        var key = blockX + "|" + blockY;
-
-                        this.level[key].block = texture;
-
-                        object.sprite.loadTexture(texture);
-
-                        object.sprite.events.onInputDown.add(removeBlock, {"phaser": this, "game": this.game, "key": key});
-
-                        this.blocks.add(object.sprite);
-
-                        this.inventory[texture]["count"]--;
-
-                        renderInventory(this, this.game);
-
-                        this.game.input.activePointer.leftButton.isDown = false;
-                    }
-                }
-            }
-        }
     },
 
     render: function () {
@@ -184,8 +148,8 @@ function renderViewPort(phaser, game)
     phaser.blocks.removeAll();
 
     var keys = Object.keys(phaser.level);
-    $.each(keys, function (index, key) {
-        var object = phaser.level[key];
+    $.each(keys, function (index, levelKey) {
+        var object = phaser.level[levelKey];
 
         if (object.x < startCameraX || object.x > endCameraX) {
             if (object.entity) {
@@ -218,15 +182,15 @@ function renderViewPort(phaser, game)
         entity.inputEnabled = true;
 
         // Allow blocks to be destroyed if it isn't air or bedrock
-        if (object.block != "bedrock" && object.block != "air") {
-            entity.events.onInputDown.add(removeBlock, {"phaser": phaser, "game": game, "key": key});
+        if (object.block != "bedrock") {
+            entity.events.onInputDown.add(blockClick, {"phaser": phaser, "game": game, "levelKey": levelKey});
         }
 
         if (object.block != "air") {
             phaser.blocks.add(entity);
         }
 
-        phaser.level[key]["entity"] = entity;
+        phaser.level[levelKey]["entity"] = entity;
     });
 }
 
@@ -371,17 +335,13 @@ function handleCollision(phaser, game)
 /**
  *
  */
-function removeBlock(sprite, pointer)
+function blockClick(sprite, pointer)
 {
     var item = sprite.key;
 
     // Because the input event can be called later when the level has been changed
-    // We want to redo the check to ensure we are not trying to remove an air or bedrock block
-    if (item == "bedrock" || item == "air") {
-        return;
-    }
-
-    if (this.phaser.itemEquiped == "blank") {
+    // We want to redo the check to ensure we are not trying to amend a bedrock block
+    if (item == "bedrock") {
         return;
     }
 
@@ -389,24 +349,13 @@ function removeBlock(sprite, pointer)
         return;
     }
 
-    if (!(item in this.phaser.inventory)) {
-        this.phaser.inventory[item] = {
-            "count" :   0,
-        };
+    if (this.phaser.itemEquiped.key == "blank") {
+        if (item != "air") {
+            removeBlock(this.phaser, this.game, this.levelKey, item, sprite);
+        }
+    } else {
+        placeBlock(this.phaser, this.game, this.levelKey, sprite);
     }
-
-    this.phaser.level[this.key].block = "air";
-
-    sprite.loadTexture("air");
-
-    this.phaser.inventory[item]["count"]++;
-
-    renderInventory(this.phaser, this.game);
-
-    this.phaser.blocks.remove(sprite);
-    this.game.add.existing(sprite);
-
-    sprite.sendToBack();
 }
 
 
@@ -438,6 +387,58 @@ function isBlockWithinRadius(phaser, x, y)
 /**
  *
  */
+function removeBlock(phaser, game, levelKey, item, sprite)
+{
+    if (!(item in phaser.inventory)) {
+        phaser.inventory[item] = {
+            "count" :   0,
+        };
+    }
+
+    phaser.level[levelKey].block = "air";
+
+    sprite.loadTexture("air");
+
+    phaser.inventory[item]["count"]++;
+
+    renderInventory(phaser, game);
+
+    phaser.blocks.remove(sprite);
+    game.add.existing(sprite);
+
+    sprite.sendToBack();
+}
+
+
+/**
+ *
+ */
+function placeBlock(phaser, game, levelKey, sprite)
+{
+    if (sprite.overlap(phaser.player)) {
+        return;
+    }
+
+    var texture = phaser.itemEquiped.key;
+    if (texture in phaser.inventory) {
+        phaser.level[levelKey].block = texture;
+
+        sprite.loadTexture(texture);
+
+        sprite.events.onInputDown.add(blockClick, {"phaser": phaser, "game": game, "levelKey": levelKey});
+
+        phaser.blocks.add(sprite);
+
+        phaser.inventory[texture]["count"]--;
+
+        renderInventory(phaser, game);
+    }
+}
+
+
+/**
+ *
+ */
 function renderInventory(phaser, game)
 {
     var startX = 10;
@@ -450,7 +451,7 @@ function renderInventory(phaser, game)
         }
 
         if (object.count == 0) {
-            phaser.itemEquiped.loadTexture(null);
+            phaser.itemEquiped.loadTexture("blank");
             phaser.itemEquipedText.setText("blank");
             delete phaser.inventory[item];
             startX = 10;
