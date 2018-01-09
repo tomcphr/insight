@@ -354,7 +354,9 @@ function blockClick(sprite, pointer)
             removeBlock(this.phaser, this.game, this.levelKey, item, sprite);
         }
     } else {
-        placeBlock(this.phaser, this.game, this.levelKey, sprite);
+        if (item == "air") {
+            placeBlock(this.phaser, this.game, this.levelKey, sprite);
+        }
     }
 }
 
