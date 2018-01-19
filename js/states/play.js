@@ -45,13 +45,6 @@ play.prototype = {
 
         this.blocks = this.add.group();
 
-        // Let there be light!
-        this.lightRadius = 500;
-        this.cameraMask = this.game.add.bitmapData(this.game.camera.width, this.game.camera.height);
-        var lightSprite = this.game.add.image(0, 0, this.cameraMask);
-        lightSprite.blendMode = Phaser.blendModes.MULTIPLY;
-        lightSprite.fixedToCamera = true;
-
         this.dropThreshold = 5;
 
         this.inventory = {
@@ -113,8 +106,6 @@ play.prototype = {
         if (this.playerHealth <= 0) {
             this.game.state.start(this.game.state.current);
         }
-
-        handleLighting(this, this.game);
 
         handleCollision(this, this.game);
 
@@ -265,34 +256,6 @@ function generateLevelInformation(phaser, game)
     }
 
     return data;
-}
-
-
-function handleLighting(phaser, game)
-{
-    // Draw the darkness of the world
-    phaser.cameraMask.context.fillStyle = 'rgb(50, 50, 50)';
-    phaser.cameraMask.context.fillRect(0, 0, game.camera.width, game.camera.height);
-
-    // Draw a circle of light in the center.
-    phaser.cameraMask.context.beginPath();
-    phaser.cameraMask.context.fillStyle = 'rgb(255, 255, 255)';
-    phaser.cameraMask.context.arc(game.camera.width / 2, game.camera.height / 2, phaser.lightRadius, 0, Math.PI * 2);
-    phaser.cameraMask.context.fill();
-
-    // This just tells the engine it should update the texture cache
-    phaser.cameraMask.dirty = true;
-
-    // Increase or decrease the light radius depending on whether it is day or night
-    if (phaser.dayState) {
-        if (phaser.lightRadius > 150) {
-            phaser.lightRadius -= 0.5;
-        }
-    } else {
-        if (phaser.lightRadius < 500) {
-            phaser.lightRadius += 0.5;
-        }
-    }
 }
 
 
