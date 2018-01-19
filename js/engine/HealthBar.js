@@ -34,6 +34,7 @@ HealthBar.prototype.constructor = HealthBar;
 
 HealthBar.prototype.setupConfiguration = function (providedConfig) {
     this.config = this.mergeWithDefaultConfiguration(providedConfig);
+    this.config.damageWidth = this.config.width;
     this.flipped = this.config.flipped;
 };
 
@@ -102,7 +103,7 @@ HealthBar.prototype.drawHealthBar = function() {
     var bmd = this.game.add.bitmapData(this.config.width, this.config.height);
     bmd.ctx.fillStyle = this.config.bar.color;
     bmd.ctx.beginPath();
-    bmd.ctx.rect(0, 0, this.config.width, this.config.height);
+    bmd.ctx.rect(0, 0, this.config.damageWidth, this.config.height);
     bmd.ctx.fill();
     bmd.update();
 
@@ -134,14 +135,24 @@ HealthBar.prototype.setPosition = function (x, y) {
 };
 
 
-HealthBar.prototype.setPercent = function(newValue){
-    if(newValue < 0) newValue = 0;
-    if(newValue > 100) newValue = 100;
+HealthBar.prototype.setPercent = function(percent){
+    if (percent < 0) percent = 0;
+    if (percent > 100) percent = 100;
 
-    var newWidth =  (newValue * this.config.width) / 100;
+    this.config.damageWidth = (percent * this.config.width) / 100;
 
-    this.setWidth(newWidth);
+    this.setWidth(this.config.damageWidth);
 };
+
+
+HealthBar.prototype.getPercent = function(){
+    var healthWidth = this.config.width;
+
+    var damageWidth = this.config.damageWidth;
+
+    return (damageWidth / healthWidth) * 100;
+};
+
 
 /*
  Hex format, example #ad3aa3
