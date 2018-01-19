@@ -103,7 +103,7 @@ play.prototype = {
     },
 
     update: function () {
-        if (this.playerHealth <= 0) {
+        if (this.healthBar.getPercent() == 0) {
             this.game.state.start(this.game.state.current);
         }
 
@@ -322,9 +322,9 @@ function handleCollision(phaser, game)
                 // Then we are going to take 5% damage for every 2 blocks after that.
                 var healthDamagePercent = (Math.ceil((blocksFallen - phaser.dropThreshold) / 2)) * phaser.dropThreshold;
 
-                phaser.playerHealth -= healthDamagePercent;
+                var currentDamagePercent = phaser.healthBar.getPercent();
 
-                phaser.healthBar.setPercent(phaser.playerHealth);
+                phaser.healthBar.setPercent(healthDamagePercent - currentDamagePercent);
             }
 
             // Reset the drop variables so the next drop starts off fresh.
