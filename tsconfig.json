@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"noImplicitAny": false,
+		"sourceMap": false,
+		"noEmitOnError": true
+	},
+	"exclude": [
+		"bin",
+		"adminer",
+		"node_modules",
+		"typings"
+	],
+	"files": [
+		"./typings/index.d.ts",
+		"./src/main.ts",
+		"./src/states/boot.ts",
+		"./src/states/play.ts",
+		"./src/classes/interface.ts",
+		"./src/classes/lifeforce.ts",
+		"./src/classes/inventory.ts",
+		"./src/classes/player.ts",
+		"./src/classes/plain.ts",
+		"./src/classes/block.ts"
+	],
+}

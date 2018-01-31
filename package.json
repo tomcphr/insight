@@ -1,0 +1,26 @@
+{
+  "name": "Insight",
+  "version": "1.0.0",
+  "description": "A retro styled platformer",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomcphr/insight.git"
+  },
+  "scripts": {
+    "compile:ts": "tsc --outFile ./bin/js/insight.js",
+    "inst": "npm install"
+  },
+  "author": "tomcphr",
+  "dependencies": {
+    "node-static": "^0.7.9",
+    "phaser": "^2.6.2",
+    "phaser-ce": "^2.10.0"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tomcphr/insight/issues"
+  },
+  "homepage": "https://github.com/tomcphr/insight#readme"
+}
