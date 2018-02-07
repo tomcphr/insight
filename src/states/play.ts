@@ -221,13 +221,13 @@ module Insight {
 
             var currentItem = inventory.getCurrentItem();
 
-            if (currentItem == "blank" && item != "air") {
+            if (currentItem == "pickaxe" && item != "air") {
                 this.level[key].block = "air";
                 sprite.loadTexture("air");
                 this.game.add.existing(sprite);
                 this.blocks.remove(sprite);
                 inventory.addItem(item, 1);
-            } else if (currentItem != "blank"  && item == "air") {
+            } else if (currentItem != "pickaxe"  && item == "air") {
                 if (sprite.overlap(this.player)) {
                     return;
                 }

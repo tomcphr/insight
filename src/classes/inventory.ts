@@ -1,9 +1,9 @@
 module Insight {
     export class Inventory {
         storage: object = {
-            "blank"     :     {}
+            "pickaxe"    :    {}
         };
-        current: string = "blank";
+        current: string = "pickaxe";
 
         getItems () {
             return this.storage;

@@ -32,11 +32,11 @@ module Insight {
                 this.inv_frame = this.game.add.sprite(this.game.camera.width - 90, 10, "item_equip");
                 this.inv_frame.fixedToCamera = true;
 
-                this.inv_equipped = this.game.add.sprite(this.game.camera.width - 82, 18, "blank");
+                this.inv_equipped = this.game.add.sprite(this.game.camera.width - 82, 18, "pickaxe");
                 this.inv_equipped.fixedToCamera = true;
                 this.inv_equipped.scale.setTo(2, 2);
 
-                this.inv_text = this.game.add.text(0, 0, "blank", {
+                this.inv_text = this.game.add.text(0, 0, "pickaxe", {
                     font: "14px Courier",
                     fill: "#000",
                     boundsAlignH: "center",
@@ -62,9 +62,9 @@ module Insight {
                 }
 
                 if (object.count == 0) {
-                    this.getInventory().setCurrentItem("blank");
-                    this.inv_equipped.loadTexture("blank");
-                    this.inv_text.setText("blank");
+                    this.getInventory().setCurrentItem("pickaxe");
+                    this.inv_equipped.loadTexture("pickaxe");
+                    this.inv_text.setText("pickaxe");
                     startX = 10;
                 } else {
                     var frame = this.game.add.image(startX, 10, "item_slot");

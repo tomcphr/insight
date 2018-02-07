@@ -7,12 +7,12 @@ module Insight {
 			this.game.load.image("stone", "assets/sprites/blocks/stone.png");
 			this.game.load.image("bedrock", "assets/sprites/blocks/bedrock.png");
 
-			this.game.load.spritesheet('player', 'assets/sprites/player.png', 32, 62, 3);
+			this.game.load.spritesheet("player", "assets/sprites/player.png", 32, 62, 3);
 
 			this.game.load.image("item_slot", "assets/ui/item_slot_frame.png");
 			this.game.load.image("item_equip", "assets/ui/item_equip_frame.png");
 
-			this.game.load.image("blank", "assets/sprites/tools/blank.png");
+			this.game.load.image("pickaxe", "assets/sprites/tools/pickaxe.png");
 		}
 
 		create() {
