@@ -196,8 +196,6 @@ module Insight {
         }
 
         click (sprite: Phaser.Sprite, pointer: Phaser.Pointer) {
-            var key = sprite.x + "|" + sprite.y;
-
             var item = sprite.key;
 
             // Because the input event can be called later when the level has been changed
@@ -206,6 +204,7 @@ module Insight {
                 return;
             }
 
+            // Check that the block we are destroying is within the player's radius
             var blocksAwayX = ((sprite.x - this.player.x) / this.blockSize) | 0;
             var blocksAwayY = ((sprite.y - this.player.y) / this.blockSize) | 0;
 
@@ -216,6 +215,39 @@ module Insight {
             if (blocksAwayY > 3 || blocksAwayY < -3) {
                 return;
             }
+
+            // Change the direction of the player to face the block we are breaking.
+            var orientation = (this.player.x > sprite.x);
+            if (orientation) {
+                this.player.scale.x = -1;
+            } else {
+                this.player.scale.x = 1;
+            }
+
+            var below = (sprite.y > this.player.y);
+            // If the sprite is below the player, ensure that the block above is air.
+            if (below) {
+                var y = sprite.y - this.blockSize;
+
+                var levelKey = sprite.x + "|" + y;
+            } else {
+                // Otherwise, check the direction of the player,
+                // and if the block opposite to the direction is air, then allow the break.
+                var x = (sprite.x - this.blockSize);
+                if (orientation) {
+                    x = (sprite.x + this.blockSize);
+                }
+
+                var levelKey = x + "|" + sprite.y;
+            }
+
+            if (this.level[levelKey].entity.key !== "air") {
+                return;
+            }
+
+
+            // Dig that block like there is no tomorrow!
+            var key = sprite.x + "|" + sprite.y;
 
             var inventory = this.interface.getInventory();
 
