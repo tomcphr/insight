@@ -19,6 +19,8 @@ module Insight {
             }
         };
 
+        destroy: number;
+
         preload () {}
 
         create () {
@@ -51,6 +53,8 @@ module Insight {
             this.interface.renderLifeforce();
 
             this.game.time.advancedTiming = true;
+
+            this.destroy = 0;
 
             this.generate();
         }
@@ -112,7 +116,10 @@ module Insight {
 
                 // Allow blocks to be destroyed if it isn't bedrock
                 if (object.block != "bedrock") {
-                    entity.events.onInputDown.add(this.click, this);
+                    entity.events.onInputDown.add(function () {
+                        this.destroy = this.game.time.now;
+                    }, this);
+                    entity.events.onInputUp.add(this.click, this);
                 }
 
                 if (object.block != "air") {
@@ -195,8 +202,19 @@ module Insight {
             }
         }
 
-        click (sprite: Phaser.Sprite, pointer: Phaser.Pointer) {
+
+        click (sprite: Block, pointer: Phaser.Pointer) {
             var item = sprite.key;
+
+            var resistance = sprite.getResistance();
+            if (!resistance) {
+                return;
+            }
+
+            var elapsed = this.game.time.now - this.destroy;
+            if (elapsed < resistance) {
+                return;
+            }
 
             // Because the input event can be called later when the level has been changed
             // We want to redo the check to ensure we are not trying to amend a bedrock block
