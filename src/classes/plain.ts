@@ -1,10 +1,8 @@
 module Insight {
     export class Plain {
         game: Phaser.Game;
+
         blockSize: number;
-
-        player: Player;
-
         generated: object;
 
         constructor (game: Phaser.Game, blockSize: number) {

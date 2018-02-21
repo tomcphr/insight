@@ -1,8 +1,8 @@
 module Insight {
 	export class Player extends Phaser.Sprite {
         game: Phaser.Game;
+
         drop: object = {};
-        dropThreshold: number = 5;
 
         constructor (game: Phaser.Game, x: number, y: number) {
             super(game, x, y, "player");
@@ -11,6 +11,10 @@ module Insight {
             this.anchor.setTo(.5, .5);
 
             this.game = game;
+        }
+
+        getThreshold () {
+            return 5;
         }
 
         startDrop () {

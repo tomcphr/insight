@@ -153,7 +153,7 @@ module Insight {
                     var blocksFallen = Math.ceil((fallDistance / this.blockSize));
 
                     // We are going to allow a five block threshold before we take damage
-                    var dropThreshold = this.player.dropThreshold;
+                    var dropThreshold = this.player.getThreshold();
                     if (blocksFallen > dropThreshold) {
                         // Then we are going to take 3% damage of the total health for every 2 blocks after that.
                         var damagePercent = (Math.ceil((blocksFallen - dropThreshold) / 2)) * dropThreshold;
