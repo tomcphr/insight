@@ -1,10 +1,8 @@
 module Insight {
     export class Plain {
         game: Phaser.Game;
+
         blockSize: number;
-
-        player: Player;
-
         generated: object;
 
         constructor (game: Phaser.Game, blockSize: number) {
@@ -45,11 +43,8 @@ module Insight {
                         var blockY = blockStartY + (depth * this.blockSize);
 
                         var key = blockX + "|" + blockY;
-                        generation[key] = {
-                            "block" :   type,
-                            "x"     :   blockX,
-                            "y"     :   blockY
-                        };
+
+                        generation[key] = new Block(this.game, blockX, blockY, type);
                     }
 
                     depth++;
@@ -66,11 +61,7 @@ module Insight {
                         continue;
                     }
 
-                    generation[key] = {
-                        "block" :   "air",
-                        "x"     :   blockX,
-                        "y"     :   blockY
-                    };
+                    generation[key] = new Block(this.game, blockX, blockY, "air");
                 }
             }
 

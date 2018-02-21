@@ -7,7 +7,8 @@ module Insight {
         constructor (game: Phaser.Game, x: number, y: number) {
             super(game, x, y, "player");
 
-            this.animations.add("walk");
+            this.animations.add("walk", [1, 2, 3], 7, true);
+
             this.anchor.setTo(.5, .5);
 
             this.game = game;

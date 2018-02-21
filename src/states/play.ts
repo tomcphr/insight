@@ -75,6 +75,8 @@ module Insight {
         }
 
         generate () {
+            console.log("generate");
+
             var startCameraX = this.plain.getBoundsX(this.player).start;
             var endCameraX = this.plain.getBoundsX(this.player).end;
 
@@ -87,46 +89,43 @@ module Insight {
                 let object = this.level[levelKey];
 
                 if (object.x < startCameraX || object.x > endCameraX) {
-                    if (object.entity) {
-                        object.entity.kill();
+                    if (object.alive) {
+                        object.kill();
                     }
                     continue;
                 }
 
                 if (object.y < startCameraY || object.y > endCameraY) {
-                    if (object.entity) {
-                        object.entity.kill();
+                    if (object.alive) {
+                        object.kill();
                     }
                     continue;
                 }
 
-                if (object.entity) {
-                    object.entity.revive();
-                    if (object.block != "air") {
-                        this.blocks.add(object.entity);
+                if (!object.alive) {
+                    object.revive();
+                    if (object.getBlock() != "air") {
+                        this.blocks.add(object);
                     }
                     continue;
                 }
 
-                var entity = new Block(this.game, object.x, object.y, object.block);
-                this.game.add.existing(entity);
-                entity.body.immovable = true;
-                entity.inputEnabled = true;
-                entity.sendToBack();
+                this.game.add.existing(object);
+                object.body.immovable = true;
+                object.inputEnabled = true;
+                object.sendToBack();
 
                 // Allow blocks to be destroyed if it isn't bedrock
-                if (object.block != "bedrock") {
-                    entity.events.onInputDown.add(function () {
+                if (object.getBlock() != "bedrock") {
+                    object.events.onInputDown.add(function () {
                         this.destroy = this.game.time.now;
                     }, this);
-                    entity.events.onInputUp.add(this.click, this);
+                    object.events.onInputUp.add(this.click, this);
                 }
 
-                if (object.block != "air") {
-                    this.blocks.add(entity);
+                if (object.getBlock() != "air") {
+                    this.blocks.add(object);
                 }
-
-                this.level[levelKey]["entity"] = entity;
             };
         }
 
@@ -179,12 +178,12 @@ module Insight {
 
             var movement = false;
             if (this.cursor.left.isDown) {
-                this.player.animations.play("walk", 7, true);
+                this.player.animations.play("walk");
                 this.player.body.velocity.x = -movementSpeed;
                 this.player.scale.x = -1;
                 movement = true;
             } else if (this.cursor.right.isDown) {
-                this.player.animations.play("walk", 7, true);
+                this.player.animations.play("walk");
                 this.player.body.velocity.x = movementSpeed;
                 this.player.scale.x = 1;
                 movement = true;
@@ -204,8 +203,6 @@ module Insight {
 
 
         click (sprite: Block, pointer: Phaser.Pointer) {
-            var item = sprite.key;
-
             var resistance = sprite.getResistance();
             if (!resistance) {
                 return;
@@ -218,7 +215,8 @@ module Insight {
 
             // Because the input event can be called later when the level has been changed
             // We want to redo the check to ensure we are not trying to amend a bedrock block
-            if (item == "bedrock") {
+            var clickedBlock = sprite.getBlock();
+            if (clickedBlock == "bedrock") {
                 return;
             }
 
@@ -259,10 +257,9 @@ module Insight {
                 var levelKey = x + "|" + sprite.y;
             }
 
-            if (this.level[levelKey].entity.key !== "air") {
+            if (this.level[levelKey].getBlock() !== "air") {
                 return;
             }
-
 
             // Dig that block like there is no tomorrow!
             var key = sprite.x + "|" + sprite.y;
@@ -271,19 +268,22 @@ module Insight {
 
             var currentItem = inventory.getCurrentItem();
 
-            if (currentItem == "pickaxe" && item != "air") {
+            if (currentItem == "pickaxe" && clickedBlock != "air") {
                 this.level[key].block = "air";
-                sprite.loadTexture("air");
+                sprite.setToBlock("air");
                 this.game.add.existing(sprite);
                 this.blocks.remove(sprite);
-                inventory.addItem(item, 1);
-            } else if (currentItem != "pickaxe"  && item == "air") {
+                inventory.addItem(clickedBlock, 1);
+            } else if (currentItem != "pickaxe"  && clickedBlock == "air") {
                 if (sprite.overlap(this.player)) {
                     return;
                 }
                 this.level[key].block = currentItem;
-                sprite.loadTexture(currentItem);
-                sprite.events.onInputDown.add(this.click, this);
+                sprite.setToBlock(currentItem);
+                sprite.events.onInputDown.add(function () {
+                    this.destroy = this.game.time.now;
+                }, this);
+                sprite.events.onInputUp.add(this.click, this);
                 this.game.add.existing(sprite);
                 this.blocks.add(sprite);
                 inventory.removeItem(currentItem, 1);

@@ -14,12 +14,25 @@ module Insight {
             this.block = block;
         }
 
+
         getResistance () {
             if (!(this.block in this.resistance)) {
                 return 0;
             }
 
             return this.resistance[this.block];
+        }
+
+
+        getBlock () {
+            return this.block;
+        }
+
+
+        setToBlock (texture) {
+            this.loadTexture(texture);
+
+            this.block = texture;
         }
 	}
 }
