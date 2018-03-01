@@ -1,5 +1,0 @@
-{
-  "globalDevDependencies": {
-    "phaser": "file:libs/phaser/typings.json"
-  }
-}
