@@ -118,5 +118,5 @@ module Insight {
                 "end"      :    boundsEnd - extraRender,
             };
         }
-	}
+    }
 }

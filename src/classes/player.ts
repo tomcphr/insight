@@ -1,5 +1,5 @@
 module Insight {
-	export class Player extends Phaser.Sprite {
+    export class Player extends Phaser.Sprite {
         game: Phaser.Game;
 
         drop: object = {};
@@ -37,5 +37,5 @@ module Insight {
         resetDrop () {
             this.drop = {};
         }
-	}
+    }
 }

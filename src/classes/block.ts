@@ -1,5 +1,5 @@
 module Insight {
-	export class Block extends Phaser.Sprite {
+    export class Block extends Phaser.Sprite {
         block: string;
 
         resistance: object = {
@@ -21,5 +21,5 @@ module Insight {
 
             return this.resistance[this.block];
         }
-	}
+    }
 }

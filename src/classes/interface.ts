@@ -1,5 +1,5 @@
 module Insight {
-	export class Interface {
+    export class Interface {
         game: Phaser.Game;
         blockSize: number;
 
@@ -151,5 +151,5 @@ module Insight {
 
             return sprite;
         };
-	}
+    }
 }
