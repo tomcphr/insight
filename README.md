@@ -1,6 +1,8 @@
 # insight
 ### Description
-A retro 2d styled platformer with role playing elements.
+A unfinished 2d styled platformer with role playing elements.
+
+It's not the best written as I was mostly just messing around with things, but it somewhat works!
 
 ### How to setup for development
 * Either have a server with a command line interface or use `XAMPP` or something similar.
